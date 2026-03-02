@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+
+{% block title %}Analysis Result - BRAINS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reuse sidebar variables from dashboard */
+    :root {
+        --sidebar-width: 280px;
+    }
+
+    body {
+        background-color: #f8fafc;
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* Sidebar Navigation (Could be refactored to a macro) */
+    .sidebar {
+        width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid #e2e8f0;
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 3rem;
+        padding: 0 0.5rem;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .logo-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .nav-link.active {
+        background: #eef2ff;
+        color: var(--primary-color);
+    }
+
+    .nav-link.active i {
+        color: var(--primary-color);
+    }
+
+    /* Main Content Area */
+    .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 2.5rem 4rem;
+    }
+
+    .header-text h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        transition: color 0.2s;
+    }
+
+    .back-btn:hover {
+        color: var(--primary-color);
+    }
+
+    /* Result Container */
+    .result-container {
+        display: flex;
+        gap: 3rem;
+        background: white;
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+    }
+
+    .image-section {
+        flex: 1;
+        max-width: 400px;
+    }
+
+    .scanned-img {
+        width: 100%;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .scan-status {
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #f1f5f9;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        color: #0f172a;
+        font-weight: 600;
+    }
+
+    .scan-status i {
+        color: #10b981;
+    }
+
+    .info-section {
+        flex: 2;
+    }
+
+    .info-group {
+        margin-bottom: 2.5rem;
+    }
+
+    .info-group h2 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        color: #0f172a;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .info-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 1.5rem;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        padding-bottom: 1rem;
+    }
+
+    .stat-row:last-child {
+        margin-bottom: 0;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .stat-label {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .stat-value {
+        color: #0f172a;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* Progress Bars */
+    .progress-container {
+        margin-top: 0.5rem;
+        width: 100%;
+        background: #e2e8f0;
+        border-radius: 50px;
+        height: 8px;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        border-radius: 50px;
+        background: linear-gradient(90deg, var(--primary-color), #818cf8);
+    }
+
+    .progress-bar.warning {
+        background: linear-gradient(90deg, #ef4444, #f87171);
+    }
+
+    .progress-bar.healthy {
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    /* Recommendations */
+    .recommendation-list {
+        list-style: none;
+    }
+
+    .recommendation-list li {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1rem;
+        color: #475569;
+        line-height: 1.5;
+    }
+
+    .recommendation-list li::before {
+        content: '\f058';
+        /* FontAwesome check-circle */
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        left: 0;
+        top: 2px;
+        color: var(--primary-color);
+    }
+
+    @media (max-width: 1100px) {
+        .result-container {
+            flex-direction: column;
+        }
+
+        .image-section {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<aside class="sidebar">
+    <div class="logo-container">
+        <div class="logo-icon"><i class="fa-solid fa-paw"></i></div>
+        <div class="logo-text">BRAINS</div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i>
+                History</a></li>
+        <li style="margin-top: auto;">
+            <a href="{{ url_for('login') }}" class="nav-link" style="color: #ef4444;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </a>
+        </li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <a href="{{ url_for('dashboard') }}" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
+
+    <div class="header-text">
+        <h1>Analysis Results ✨</h1>
+    </div>
+
+    <div class="result-container">
+        <div class="image-section">
+            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                alt="Scanned Pet" class="scanned-img">
+            <div class="scan-status">
+                <i class="fa-solid fa-circle-check"></i> Analysis Complete
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-group">
+                <h2><i class="fa-solid fa-dna" style="color: var(--primary-color);"></i> Breed Identification</h2>
+                <div class="info-card">
+                    <div class="stat-row" style="border: none;">
+                        <span class="stat-label">Primary Breed</span>
+                        <div style="text-align: right;">
+                            <span class="stat-value">Golden Retriever</span>
+                            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">98.5% Confidence</div>
+                            <div class="progress-container">
+                                <div class="progress-bar" style="width: 98.5%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <h2><i class="fa-solid fa-stethoscopec" style="color: #ef4444;"></i> Health Diagnostics</h2>
+                <div class="info-card">
+                    <div class="stat-row">
+                        <span class="stat-label">Disease Detected</span>
+                        <span class="stat-value" style="color: #10b981;">None (Healthy)</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Anomaly Score</span>
+                        <div style="text-align: right; width: 150px;">
+                            <span class="stat-value">1.2%</span>
+                            <div class="progress-container">
+                                <div class="progress-bar healthy" style="width: 1.2%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-group">
+                <h2><i class="fa-solid fa-lightbulb" style="color: #f59e0b;"></i> Recommendations</h2>
+                <div class="info-card">
+                    <ul class="recommendation-list">
+                        <li>Your pet appears to be perfectly healthy based on the uploaded image.</li>
+                        <li>Golden Retrievers are prone to hip dysplasia. Ensure regular weight management.</li>
+                        <li>Schedule the next routine vet checkup in 6 months.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width: 100%; border-radius: 12px; padding: 1rem; font-size: 1.1rem;">
+                <i class="fa-solid fa-download" style="margin-right: 0.5rem;"></i> Download PDF Report
+            </button>
+        </div>
+    </div>
+</main>
+{% endblock %}

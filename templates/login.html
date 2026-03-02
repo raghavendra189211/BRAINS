@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - BRAINS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Specific styles for Login Page to ensure "Wow" factor */
+    body {
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Inter', sans-serif;
+        overflow: hidden;
+    }
+
+    /* Animated background blobs */
+    .blob {
+        position: absolute;
+        filter: blur(80px);
+        z-index: 0;
+        opacity: 0.6;
+        animation: float 10s infinite alternate ease-in-out;
+    }
+
+    .blob-1 {
+        top: -10%;
+        left: -10%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(79, 70, 229, 1) 0%, rgba(124, 58, 237, 0) 70%);
+        animation-delay: 0s;
+    }
+
+    .blob-2 {
+        bottom: -10%;
+        right: -10%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.8) 0%, rgba(5, 150, 105, 0) 70%);
+        animation-duration: 12s;
+    }
+
+    @keyframes float {
+        0% {
+            transform: translate(0, 0) scale(1);
+        }
+
+        50% {
+            transform: translate(30px, -50px) scale(1.1);
+        }
+
+        100% {
+            transform: translate(-20px, 20px) scale(0.9);
+        }
+    }
+
+    .auth-container {
+        position: relative;
+        z-index: 10;
+        width: 100%;
+        max-width: 1100px;
+        min-height: 600px;
+        margin: 2rem;
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        display: flex;
+        overflow: hidden;
+    }
+
+    .auth-left {
+        flex: 1;
+        padding: 4rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        background: url('https://images.unsplash.com/photo-1548199973-03cce0bbc87b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80') center/cover;
+    }
+
+    .auth-left::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.3) 0%, rgba(15, 23, 42, 0.9) 100%);
+    }
+
+    .auth-left-content {
+        position: relative;
+        z-index: 2;
+        color: white;
+    }
+
+    .auth-left h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        background: linear-gradient(to right, #fff, #a5b4fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .auth-left p {
+        font-size: 1.1rem;
+        color: #cbd5e1;
+        max-width: 80%;
+        line-height: 1.6;
+    }
+
+    .auth-right {
+        flex: 1;
+        padding: 4rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        background: rgba(15, 23, 42, 0.6);
+    }
+
+    .auth-form-wrapper {
+        max-width: 400px;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .auth-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2.5rem;
+    }
+
+    .auth-tab {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #64748b;
+        background: none;
+        border: none;
+        padding-bottom: 0.5rem;
+        cursor: pointer;
+        position: relative;
+        transition: color 0.3s;
+    }
+
+    .auth-tab.active {
+        color: white;
+    }
+
+    .auth-tab::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+
+    .auth-tab.active::after {
+        width: 100%;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .form-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #94a3b8;
+        transition: color 0.3s;
+    }
+
+    .custom-input {
+        width: 100%;
+        padding: 1rem 1rem 1rem 3rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        color: white;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .custom-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.08);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.15);
+    }
+
+    .custom-input:focus+i,
+    .custom-input:not(:placeholder-shown)+i {
+        color: var(--primary-color);
+    }
+
+    .custom-btn {
+        width: 100%;
+        padding: 1rem;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .custom-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.5s ease;
+    }
+
+    .custom-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.5);
+    }
+
+    .custom-btn:hover::before {
+        left: 100%;
+    }
+
+    .form-section {
+        display: none;
+        animation: fadeIn 0.4s ease forwards;
+    }
+
+    .form-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 900px) {
+        .auth-container {
+            flex-direction: column;
+        }
+
+        .auth-left {
+            padding: 3rem 2rem;
+        }
+
+        .auth-right {
+            padding: 3rem 2rem;
+        }
+
+        .blob-1,
+        .blob-2 {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<div class="auth-container">
+    <div class="auth-left">
+        <div class="auth-left-content">
+            <h1>Intelligence<br>for your pet's health.</h1>
+            <p>Upload a picture of your pet to instantly identify its breed and detect potential health issues with our
+                advanced AI model.</p>
+        </div>
+    </div>
+
+    <div class="auth-right">
+        <div class="auth-form-wrapper">
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" onclick="switchTab('register')">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="login-form" class="form-section active" action="{{ url_for('login') }}" method="POST">
+                <input type="hidden" name="action" value="login">
+                <div class="form-group">
+                    <input type="email" name="email" class="custom-input" placeholder="Email Address" required>
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" class="custom-input" placeholder="Password" required>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; font-size: 0.9rem; color: #94a3b8;">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" style="accent-color: var(--primary-color);"> Remember me
+                    </label>
+                    <a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">Forgot
+                        Password?</a>
+                </div>
+                <button type="submit" class="custom-btn">Sign In to Dashboard <i class="fa-solid fa-arrow-right"
+                        style="margin-left: 0.5rem;"></i></button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="register-form" class="form-section" action="{{ url_for('login') }}" method="POST">
+                <input type="hidden" name="action" value="register">
+                <div class="form-group">
+                    <input type="text" name="fullname" class="custom-input" placeholder="Full Name" required>
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" class="custom-input" placeholder="Email Address" required>
+                    <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" class="custom-input" placeholder="Password" required>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <button type="submit" class="custom-btn">Create Account</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function switchTab(tab) {
+        // Update tabs
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+
+        // Update forms
+        document.querySelectorAll('.form-section').forEach(f => {
+            f.classList.remove('active');
+        });
+        document.getElementById(tab + '-form').classList.add('active');
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,774 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ pet_name }} - Pet Dashboard - BRAINS{% endblock %}
+
+{% block extra_css %}
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    :root {
+        --sidebar-width: 280px;
+        --surface-color: #ffffff;
+        --background-color: #f8fafc;
+        --border-color: #e2e8f0;
+        --text-primary: #0f172a;
+        --text-secondary: #64748b;
+        --text-tertiary: #94a3b8;
+    }
+
+    body {
+        background-color: var(--background-color);
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* Sidebar Navigation (Reused) */
+    .sidebar {
+        width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid var(--border-color);
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 3rem;
+        padding: 0 0.5rem;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .logo-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        background: #f1f5f9;
+        color: var(--text-primary);
+    }
+
+    .nav-link.active {
+        background: #eef2ff;
+        color: var(--primary-color);
+    }
+
+    .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 2.5rem 4rem;
+        max-width: 1400px;
+    }
+
+    /* Common Layout & Cards */
+    .section-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .card {
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        margin-bottom: 2rem;
+    }
+
+    /* 1. Top Header Section (Identity Card) */
+    .identity-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 2rem;
+        gap: 2rem;
+    }
+
+    .identity-left {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
+
+    .pet-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .pet-info h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        line-height: 1.2;
+        margin-bottom: 0.5rem;
+    }
+
+    .pet-tags {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .pet-tag {
+        background: #f1f5f9;
+        color: var(--text-secondary);
+        padding: 0.35rem 0.85rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    .identity-right {
+        display: flex;
+        gap: 1.5rem;
+        text-align: right;
+    }
+
+    .metric-box {
+        background: #f8fafc;
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 1rem 1.5rem;
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .metric-box.alert {
+        background: #fff1f2;
+        border-color: #fecdd3;
+    }
+
+    .metric-label {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .metric-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .metric-value.score {
+        color: #10b981;
+    }
+
+    .metric-value.alert-text {
+        color: #e11d48;
+        font-size: 1.1rem;
+        margin-top: 0.2rem;
+    }
+
+    /* 2. Health Status Summary */
+    .health-status-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .status-item {
+        background: #f8fafc;
+        padding: 1.25rem;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+    }
+
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .bg-blue {
+        background: #eff6ff;
+        color: #3b82f6;
+    }
+
+    .bg-green {
+        background: #f0fdf4;
+        color: #22c55e;
+    }
+
+    .bg-yellow {
+        background: #fefce8;
+        color: #eab308;
+    }
+
+    .bg-red {
+        background: #fef2f2;
+        color: #ef4444;
+    }
+
+    .status-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .status-value {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .btn-outline {
+        border: 2px solid var(--border-color);
+        background: transparent;
+        color: var(--text-primary);
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-outline:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    /* Layout Grids */
+    .grid-2-col {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 2rem;
+    }
+
+    /* 3. Trend Graph Section */
+    .graph-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+    }
+
+    .graph-tab {
+        color: var(--text-secondary);
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+
+    .graph-tab.active {
+        background: #f1f5f9;
+        color: var(--primary-color);
+    }
+
+    .chart-container {
+        height: 300px;
+        width: 100%;
+    }
+
+    /* 4. Symptom & Triage History */
+    .triage-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .triage-table th {
+        text-align: left;
+        padding: 1rem;
+        color: var(--text-tertiary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .triage-table td {
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .triage-row {
+        transition: background 0.2s;
+        cursor: pointer;
+    }
+
+    .triage-row:hover {
+        background: #f8fafc;
+    }
+
+    .badge {
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-block;
+    }
+
+    .badge-red {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .badge-orange {
+        background: #ffedd5;
+        color: #f97316;
+    }
+
+    .badge-green {
+        background: #dcfce7;
+        color: #22c55e;
+    }
+
+    /* 5. Vaccination & Medical Timeline */
+    .timeline {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.85rem;
+        top: 0.25rem;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 1px #e2e8f0;
+        background: #cbd5e1;
+    }
+
+    .timeline-item.completed::before {
+        background: #22c55e;
+        box-shadow: 0 0 0 1px #22c55e;
+    }
+
+    .timeline-item.due::before {
+        background: #eab308;
+        box-shadow: 0 0 0 1px #eab308;
+    }
+
+    .timeline-item.overdue::before {
+        background: #ef4444;
+        box-shadow: 0 0 0 1px #ef4444;
+    }
+
+    .timeline-content h4 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.05rem;
+        color: var(--text-primary);
+        margin-bottom: 0.25rem;
+    }
+
+    .timeline-content p {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .timeline-content .overdue-text {
+        color: #ef4444;
+        font-weight: 600;
+    }
+
+    /* 6. Image Scan Section */
+    .scan-box {
+        border: 2px dashed var(--border-color);
+        border-radius: 16px;
+        padding: 2rem 1rem;
+        text-align: center;
+        background: #f8fafc;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 1.5rem;
+    }
+
+    .scan-box:hover {
+        border-color: var(--primary-color);
+        background: #eef2ff;
+    }
+
+    .scan-icon {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+    }
+
+    .scan-text {
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+    }
+
+    .scan-result {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .result-thumbnail {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        object-fit: cover;
+    }
+
+    .result-info h5 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .result-info p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<aside class="sidebar">
+    <div class="logo-container">
+        <div class="logo-icon"><i class="fa-solid fa-paw"></i></div>
+        <div class="logo-text">BRAINS</div>
+    </div>
+    <ul class="nav-links">
+        <li><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fa-solid fa-arrow-left"></i> Back to
+                Main</a></li>
+        <li><a href="#" class="nav-link active"><i class="fa-solid fa-dog"></i> {{ pet_name }}'s Dashboard</a></li>
+        <li><a href="{{ url_for('history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i>
+                History</a></li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <!-- 1️⃣ Top Header Section (Identity Card) -->
+    <div class="card identity-card">
+        <div class="identity-left">
+            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&q=80"
+                alt="{{ pet_name }}" class="pet-photo">
+            <div class="pet-info">
+                <h1>{{ pet_name }}</h1>
+                <div class="pet-tags">
+                    <span class="pet-tag"><i class="fa-solid fa-paw"></i> Dog</span>
+                    <span class="pet-tag"><i class="fa-solid fa-dna"></i> Golden Retriever</span>
+                    <span class="pet-tag"><i class="fa-solid fa-cake-candles"></i> 4 Years</span>
+                    <span class="pet-tag"><i class="fa-solid fa-venus-mars"></i> Male</span>
+                    <span class="pet-tag"><i class="fa-solid fa-weight-scale"></i> 32 kg</span>
+                </div>
+            </div>
+        </div>
+        <div class="identity-right">
+            <div class="metric-box">
+                <div class="metric-label">Health Risk</div>
+                <div class="metric-value score">12/100</div>
+            </div>
+            <div class="metric-box">
+                <div class="metric-label">Last Check-in</div>
+                <div class="metric-value" style="font-size: 1.2rem; margin-top: 0.3rem;">Today, 8am</div>
+            </div>
+            <div class="metric-box alert">
+                <div class="metric-label">Alert</div>
+                <div class="metric-value alert-text">Deworming</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2️⃣ Health Status Summary -->
+    <div class="card">
+        <div class="section-title"><i class="fa-solid fa-heart-pulse" style="color: #ef4444;"></i> Today's Condition
+        </div>
+        <div class="health-status-grid">
+            <div class="status-item">
+                <div class="status-icon bg-blue"><i class="fa-solid fa-bone"></i></div>
+                <div class="status-label">Appetite</div>
+                <div class="status-value">Normal</div>
+            </div>
+            <div class="status-item">
+                <div class="status-icon bg-green"><i class="fa-solid fa-person-running"></i></div>
+                <div class="status-label">Activity Level</div>
+                <div class="status-value">High</div>
+            </div>
+            <div class="status-item">
+                <div class="status-icon bg-yellow"><i class="fa-solid fa-face-smile"></i></div>
+                <div class="status-label">Mood</div>
+                <div class="status-value">Playful</div>
+            </div>
+            <div class="status-item" style="background: white; border-color: #fecdd3;">
+                <div class="status-icon bg-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="status-label">Symptoms Reported</div>
+                <div class="status-value" style="color: #e11d48;">No</div>
+            </div>
+        </div>
+        <button class="btn-outline"><i class="fa-solid fa-plus"></i> New Health Check</button>
+    </div>
+
+    <div class="grid-2-col">
+        <!-- Main Column (Left) -->
+        <div>
+            <!-- 3️⃣ Trend Graph Section -->
+            <div class="card">
+                <div class="section-title"><i class="fa-solid fa-chart-line" style="color: var(--primary-color);"></i>
+                    Health Trends</div>
+                <div class="graph-tabs">
+                    <div class="graph-tab active">Weight</div>
+                    <div class="graph-tab">Appetite</div>
+                    <div class="graph-tab">Activity</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 4️⃣ Symptom & Triage History -->
+            <div class="card">
+                <div class="section-title"><i class="fa-solid fa-clipboard-list" style="color: #8b5cf6;"></i> Symptom &
+                    Triage History</div>
+                <div style="overflow-x: auto;">
+                    <table class="triage-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Symptoms</th>
+                                <th>Severity</th>
+                                <th>Recommendation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="triage-row">
+                                <td>Oct 12, 2023</td>
+                                <td>Mild scratching right ear</td>
+                                <td><span class="badge badge-green">Monitor</span></td>
+                                <td>Clean ear, observe for 48h</td>
+                            </tr>
+                            <tr class="triage-row">
+                                <td>Aug 05, 2023</td>
+                                <td>Red spot on belly</td>
+                                <td><span class="badge badge-orange">Urgent</span></td>
+                                <td>Schedule vet appointment</td>
+                            </tr>
+                            <tr class="triage-row">
+                                <td>Jan 22, 2023</td>
+                                <td>Lethargic, not eating</td>
+                                <td><span class="badge badge-red">Emergency</span></td>
+                                <td>Immediate ER visit required</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Column (Right) -->
+        <div>
+            <!-- 5️⃣ Vaccination & Medical Timeline -->
+            <div class="card">
+                <div class="section-title"><i class="fa-solid fa-syringe" style="color: #06b6d4;"></i> Medical Timeline
+                </div>
+                <div class="timeline">
+                    <div class="timeline-item overdue">
+                        <div class="timeline-content">
+                            <h4>Deworming</h4>
+                            <p class="overdue-text">Overdue by 5 days</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item due">
+                        <div class="timeline-content">
+                            <h4>DHPP Booster</h4>
+                            <p>Due in 12 days</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item completed">
+                        <div class="timeline-content">
+                            <h4>Rabies Vaccine</h4>
+                            <p>Completed on Mar 15, 2023</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item completed">
+                        <div class="timeline-content">
+                            <h4>Annual Checkup</h4>
+                            <p>Completed on Jan 10, 2023</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6️⃣ Image Scan Section -->
+            <div class="card">
+                <div class="section-title"><i class="fa-solid fa-camera" style="color: #6366f1;"></i> Skin/Eye Scan
+                </div>
+                <div class="scan-box" onclick="document.getElementById('scan-input').click()">
+                    <div class="scan-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                    <div class="scan-text">Upload skin / ear / wound image</div>
+                    <input type="file" id="scan-input" style="display: none;" accept="image/*">
+                </div>
+
+                <h4
+                    style="font-size: 0.85rem; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.75rem;">
+                    Last Scan Result</h4>
+                <div class="scan-result">
+                    <img src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
+                        alt="Scan" class="result-thumbnail">
+                    <div class="result-info">
+                        <h5>Healthy Skin <i class="fa-solid fa-circle-check" style="color: #10b981;"></i></h5>
+                        <p>99.2% Confidence • Aug 05</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Initialize Chart.js for the Trend Graph Section
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('trendChart').getContext('2d');
+
+        // Mock data for Weight over time
+        const data = {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+            datasets: [{
+                label: 'Weight (kg)',
+                data: [30.5, 30.8, 31.0, 31.2, 31.5, 31.8, 31.6, 31.9, 32.1, 32.0],
+                fill: true,
+                backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                borderWidth: 2,
+                tension: 0.4,
+                pointBackgroundColor: 'rgba(79, 70, 229, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(79, 70, 229, 1)'
+            }]
+        };
+
+        const config = {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#e2e8f0',
+                            drawBorder: false
+                        },
+                        min: 28,
+                        max: 34
+                    }
+                }
+            }
+        };
+
+        new Chart(ctx, config);
+    });
+</script>
+{% endblock %}

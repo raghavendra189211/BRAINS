@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block title %}History - BRAINS{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Reuse sidebar variables from dashboard */
+    :root {
+        --sidebar-width: 280px;
+    }
+
+    body {
+        background-color: #f8fafc;
+        display: flex;
+        min-height: 100vh;
+    }
+
+    /* Sidebar Navigation (Could be refactored to a macro/include later) */
+    .sidebar {
+        width: var(--sidebar-width);
+        background: white;
+        border-right: 1px solid #e2e8f0;
+        padding: 2rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        height: 100vh;
+        z-index: 100;
+    }
+
+    .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 3rem;
+        padding: 0 0.5rem;
+    }
+
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.25rem;
+    }
+
+    .logo-text {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.5px;
+    }
+
+    .nav-links {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        color: #64748b;
+        text-decoration: none;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .nav-link.active {
+        background: #eef2ff;
+        color: var(--primary-color);
+    }
+
+    .nav-link.active i {
+        color: var(--primary-color);
+    }
+
+    /* Main Content Area */
+    .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        padding: 2.5rem 4rem;
+    }
+
+    .header {
+        margin-bottom: 3rem;
+    }
+
+    .header-text h1 {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-text p {
+        color: #64748b;
+        font-size: 1.1rem;
+    }
+
+    /* History Grid */
+    .history-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .history-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        transition: all 0.3s ease;
+    }
+
+    .history-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .history-img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        background: #f1f5f9;
+    }
+
+    .history-content {
+        padding: 1.5rem;
+    }
+
+    .history-date {
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .history-title {
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.25rem;
+        color: #0f172a;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .tag-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .tag {
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .tag-breed {
+        background: #e0e7ff;
+        color: var(--primary-color);
+    }
+
+    .tag-disease {
+        background: #fee2e2;
+        color: #ef4444;
+    }
+
+    .tag-healthy {
+        background: #d1fae5;
+        color: #10b981;
+    }
+
+    .view-btn {
+        width: 100%;
+        padding: 0.75rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        color: #64748b;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .view-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<aside class="sidebar">
+    <div class="logo-container">
+        <div class="logo-icon"><i class="fa-solid fa-paw"></i></div>
+        <div class="logo-text">BRAINS</div>
+    </div>
+
+    <ul class="nav-links">
+        <li><a href="{{ url_for('dashboard') }}" class="nav-link"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+        <li><a href="{{ url_for('history') }}" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i>
+                History</a></li>
+        <li style="margin-top: auto;">
+            <a href="{{ url_for('login') }}" class="nav-link" style="color: #ef4444;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </a>
+        </li>
+    </ul>
+</aside>
+
+<main class="main-content">
+    <header class="header">
+        <div class="header-text">
+            <h1>Scan History 📋</h1>
+            <p>Review your previous pet health analyses.</p>
+        </div>
+    </header>
+
+    <div class="history-grid">
+        <!-- Mock Data 1 -->
+        <div class="history-card">
+            <img src="https://images.unsplash.com/photo-1552053831-71594a27632d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                alt="Dog scan" class="history-img">
+            <div class="history-content">
+                <div class="history-date"><i class="fa-regular fa-calendar"></i> Oct 24, 2023</div>
+                <h3 class="history-title">Buddy (Golden Retriever)</h3>
+                <div class="tag-container">
+                    <span class="tag tag-breed">99% Golden Retriever</span>
+                    <span class="tag tag-healthy">Healthy</span>
+                </div>
+                <button class="view-btn">View Full Report</button>
+            </div>
+        </div>
+
+        <!-- Mock Data 2 -->
+        <div class="history-card">
+            <img src="https://images.unsplash.com/photo-1517849845537-4d257902454a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                alt="Dog scan" class="history-img">
+            <div class="history-content">
+                <div class="history-date"><i class="fa-regular fa-calendar"></i> Sep 15, 2023</div>
+                <h3 class="history-title">Max (Bulldog)</h3>
+                <div class="tag-container">
+                    <span class="tag tag-breed">94% Bulldog</span>
+                    <span class="tag tag-disease">Skin Infection Detected</span>
+                </div>
+                <button class="view-btn">View Full Report</button>
+            </div>
+        </div>
+
+        <!-- Mock Data 3 -->
+        <div class="history-card">
+            <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80"
+                alt="Cat scan" class="history-img">
+            <div class="history-content">
+                <div class="history-date"><i class="fa-regular fa-calendar"></i> Aug 02, 2023</div>
+                <h3 class="history-title">Luna (Persian)</h3>
+                <div class="tag-container">
+                    <span class="tag tag-breed">88% Persian Cat</span>
+                    <span class="tag tag-healthy">Healthy</span>
+                </div>
+                <button class="view-btn">View Full Report</button>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
